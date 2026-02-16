@@ -122,11 +122,11 @@ puppeteer.use(StealthPlugin());
             let hasMorePosts = true;
             let postIndexInCurrPage: number = 0;
             while (hasMorePosts) {
-                const postFeed = await page.$('ul[data-cardlayout-edgeless]');
+                const postFeed = await page.$('div[data-cardlayout-edgeless]');
                 if (!postFeed) throw new Error('Could not find post feed');
 
                 const posts = (
-                    await page.$$('ul[data-cardlayout-edgeless] > li')
+                    await page.$$('div[data-cardlayout-edgeless] > div')
                 ).slice(postIndexInCurrPage);
                 console.log(`Found ${posts.length} posts.`);
                 console.log(
@@ -204,10 +204,11 @@ puppeteer.use(StealthPlugin());
 
 async function processPost(page: Page, index: number): Promise<void> {
     try {
-        const post = (await page.$$('ul[data-cardlayout-edgeless] > li'))[index];
+        const post = (await page.$$('div[data-cardlayout-edgeless] > div'))[index];
         if (!post) throw new Error('Could not find post');
         await post.evaluate(el => el.scrollIntoView());
 
+        // BUG: Doesn't find commend id/ load more commments properly
         const cid = await post.evaluate(el => {
             console.log(el.querySelector('div[id^="cid-"]'));
             return el.querySelector('div[id^="cid-"]')?.id;
