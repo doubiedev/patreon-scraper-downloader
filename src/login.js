@@ -30,13 +30,13 @@ const { connect } = require('puppeteer-real-browser');
 const path = require('path');
 
 (async () => {
-  const { page } = await connect({
-    headless: false,
-    args: [`--user-data-dir=${path.join(__dirname, '../browser-data')}`],
-    customConfig: {},
-    turnstile: true,
-    connectOption: {},
-    disableXvfb: false,
-  });
-  await page.goto('https://www.patreon.com/login');
+    const { page } = await connect({
+        headless: false,
+        args: [`--user-data-dir=${path.join(__dirname, '../browser-data')}`],
+        customConfig: {},
+        turnstile: true,
+        connectOption: {},
+        disableXvfb: false,
+    });
+    await page.goto('https://www.patreon.com/login');
 })();
