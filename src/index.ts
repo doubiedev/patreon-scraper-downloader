@@ -49,7 +49,7 @@ puppeteer.use(StealthPlugin());
             throw new Error(
                 'Please set a valid numPostsToScrape in the config file.'
             );
-        const page = await browser.newPage();
+        // const page = await browser.newPage();
         const baseDir = path.join(
             __dirname,
             '../dist',
@@ -78,7 +78,7 @@ puppeteer.use(StealthPlugin());
             await page.waitForSelector('#post-feed-filter-dialog');
             const yearBtns = await page.$$('input[name="consolidated-date-filter"]');
             if (!yearBtns) throw new Error('Could not find year buttons');
-            for (let i = 2; i < yearBtns.length; i++) {
+            for (let i = 1; i < yearBtns.length; i++) {
                 const yearBtn = yearBtns[i];
                 const year = await yearBtn.evaluate(
                     (el: HTMLElement) => el.parentElement?.textContent
@@ -106,7 +106,7 @@ puppeteer.use(StealthPlugin());
                 );
                 await page.waitForSelector('#post-feed-filter-dialog');
                 const yearBtn = await page.$(
-                    `input[name="consolidated-date-filter"][value="${1 + filterCount++}"]`
+                    `input[name="consolidated-date-filter"][value="${filterCount++}"]`
                 );
                 if (!yearBtn) throw new Error('Could not find year button');
                 await yearBtn.evaluate((el: HTMLElement) => el.click());
