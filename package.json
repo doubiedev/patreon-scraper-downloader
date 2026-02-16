@@ -15,17 +15,17 @@
     "author": "kennethkn",
     "license": "ISC",
     "dependencies": {
-        "fs-extra": "^11.2.0",
-        "puppeteer": "^23.0.2",
+        "fs-extra": "^11.3.3",
+        "puppeteer": "^24.37.3",
         "puppeteer-extra": "^3.3.6",
         "puppeteer-extra-plugin-stealth": "^2.11.2",
-        "puppeteer-real-browser": "^1.3.3"
+        "puppeteer-real-browser": "^1.4.4"
     },
     "devDependencies": {
         "@types/fs-extra": "^11.0.4",
-        "@types/node": "^22.2.0",
+        "@types/node": "^25.2.3",
         "@types/puppeteer": "^7.0.4",
         "ts-node": "^10.9.2",
-        "typescript": "^5.5.4"
+        "typescript": "^5.9.3"
     }
 }
