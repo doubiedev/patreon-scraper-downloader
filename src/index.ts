@@ -16,10 +16,6 @@ const FILTER_BTN_LABEL = 'post feed filters toggle';
 const APPLY_FILTER_BTN_LABEL = 'Apply filter';
 const LOAD_REPLIES_LABEL = 'Load replies';
 
-// const FILTER_BTN_LABEL = '文章摘要篩選條件切換按鈕';
-// const APPLY_FILTER_BTN_LABEL = '套用篩選條件';
-// const LOAD_REPLIES_LABEL = '載入回覆';
-
 // Debugging options below
 
 // Log debug information if true
@@ -35,9 +31,15 @@ const WHITELISTED_POSTS: number[] = [];
 puppeteer.use(StealthPlugin());
 
 (async () => {
-    const browser = await puppeteer.launch({
+    const { connect } = require('puppeteer-real-browser');
+
+    const { browser, page } = await connect({
         headless: false,
-        userDataDir: path.join(__dirname, '../browser-data'),
+        args: [`--user-data-dir=${path.join(__dirname, '../browser-data')}`],
+        customConfig: {},
+        turnstile: true,
+        connectOption: {},
+        disableXvfb: false,
     });
 
     try {
@@ -79,7 +81,7 @@ puppeteer.use(StealthPlugin());
             for (let i = 2; i < yearBtns.length; i++) {
                 const yearBtn = yearBtns[i];
                 const year = await yearBtn.evaluate(
-                    el => el.parentElement?.textContent
+                    (el: HTMLElement) => el.parentElement?.textContent
                 );
                 if (!year) throw new Error('Could not find year value');
                 years.push(year);
@@ -98,8 +100,8 @@ puppeteer.use(StealthPlugin());
                     `button[aria-disabled="false"][aria-label="${FILTER_BTN_LABEL}"]`
                 );
                 if (!filterBtn) throw new Error('Could not find filter button');
-                filterBtn.evaluate(el => el.scrollIntoView());
-                await (filterBtn as ElementHandle<HTMLButtonElement>).evaluate(el =>
+                filterBtn.evaluate((el: HTMLElement) => el.scrollIntoView());
+                await (filterBtn as ElementHandle<HTMLButtonElement>).evaluate((el: HTMLElement) =>
                     el.click()
                 );
                 await page.waitForSelector('#post-feed-filter-dialog');
@@ -107,13 +109,13 @@ puppeteer.use(StealthPlugin());
                     `input[name="consolidated-date-filter"][value="${1 + filterCount++}"]`
                 );
                 if (!yearBtn) throw new Error('Could not find year button');
-                await yearBtn.evaluate(el => el.click());
+                await yearBtn.evaluate((el: HTMLElement) => el.click());
                 console.log(`Clicked filter for year ${year}.`);
                 const applyBtn = await page.$(
                     `button[label="${APPLY_FILTER_BTN_LABEL}"]`
                 );
                 if (!applyBtn) throw new Error('Could not find apply button');
-                await applyBtn.evaluate(el => el.click());
+                await applyBtn.evaluate((el: HTMLElement) => el.click());
                 await page.waitForSelector('div[data-tag="post-card"]');
             }
 
@@ -154,14 +156,14 @@ puppeteer.use(StealthPlugin());
                 }
 
                 const postFeedParent = await postFeed.evaluateHandle(
-                    el => el.parentElement
+                    (el: HTMLElement) => el.parentElement
                 );
                 if (!(postFeedParent instanceof ElementHandle))
                     throw new Error('Could not find ul parent');
 
                 const loadMoreButton = await (
                     (await (postFeedParent as ElementHandle).evaluateHandle(
-                        el => el.lastElementChild
+                        (el: Element) => el.lastElementChild
                     )) as ElementHandle
                 ).$('button');
                 if (!loadMoreButton) {
@@ -174,7 +176,7 @@ puppeteer.use(StealthPlugin());
                 await loadMoreButton.click();
 
                 await page.waitForFunction(
-                    previousLength => {
+                    (previousLength: number) => {
                         const postFeed = document.querySelector(
                             'ul[data-cardlayout-edgeless]'
                         );
