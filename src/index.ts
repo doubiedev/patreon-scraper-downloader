@@ -209,26 +209,47 @@ async function processPost(page: Page, index: number): Promise<void> {
         await post.evaluate(el => el.scrollIntoView());
 
         // BUG: Doesn't find commend id/ load more commments properly
-        const cid = await post.evaluate(el => {
-            console.log(el.querySelector('div[id^="cid-"]'));
-            return el.querySelector('div[id^="cid-"]')?.id;
-        });
-        if (!cid) throw new Error('Could not find comment id');
-        const showMoreBtn = await page.$(
-            `button[aria-expanded="false"][aria-controls=${cid}]`
-        );
+        // NOTE: Ok so this original code finds the comment id, then uses that to trigger the button
+        // Current patreon page has no comment id, so better to use data-tag?
+        // Maybe I don't even need this because loadMoreComments exists
+        // It's actually for "Show more" not loading comments, appearing on text posts with hidden text
+
+        // Solution 1: get the button with text "Show more"
+        // Solution 2 (complex): get all buttons in post, get all divs with an id in post. if a button's aria-controls matches a div's id, get that button
+
+        // TODO: Add SHOW_MORE_LABEL constant
+
+        // const cid = await post.evaluate(el => {
+        //     console.log(el.querySelector('div[id^="cid-"]'));
+        //     return el.querySelector('div[id^="cid-"]')?.id;
+        // });
+        // if (!cid) throw new Error('Could not find comment id');
+        // const showMoreBtn = await page.$(
+        //     `button[aria-expanded="false"][aria-controls=${cid}]`
+        // );
+
+        // if (showMoreBtn) {
+        //     showMoreBtn.evaluate((el: Element) => el.click());
+        //     console.log(`Post ${index}: Clicked show more on post.`);
+        //     await page.waitForFunction(
+        //         (cid: string) =>
+        //             document.querySelector(
+        //                 `button[aria-controls="${cid}"][aria-expanded="true"]`
+        //             ) !== null,
+        //         {},
+        //         cid
+        //     );
+        // }
+
+        const showMoreBtn = await post.$('button[aria-expanded="false"] ::-p-text(Show more)');
         if (showMoreBtn) {
-            showMoreBtn.evaluate(el => el.click());
+            await showMoreBtn.click()
             console.log(`Post ${index}: Clicked show more on post.`);
-            await page.waitForFunction(
-                (cid: string) =>
-                    document.querySelector(
-                        `button[aria-controls="${cid}"][aria-expanded="true"]`
-                    ) !== null,
-                {},
-                cid
-            );
+            await post.waitForSelector('button[aria-expanded="true"] ::-p-text(Show less)');
+        } else {
+            console.log(`Post ${index}: Show more button not found.`);
         }
+
         console.log(`Post ${index}: Full post loaded.`);
 
         if (SCRAPE_COMMENTS) {
@@ -262,7 +283,7 @@ async function loadMoreComments(page: Page, index: number): Promise<void> {
             await page.waitForFunction(
                 (index: number) => {
                     const post = document.querySelectorAll(
-                        'ul[data-cardlayout-edgeless] > li'
+                        'div[data-cardlayout-edgeless] > div'
                     )[index];
                     return (
                         post.querySelector(
@@ -378,11 +399,8 @@ async function getPostHandle(
     index: number
 ): Promise<ElementHandle> {
     try {
-        const ul = await page.$('ul[data-cardlayout-edgeless]');
-        if (!ul) throw new Error('Could not find ul');
-        const post = (await ul.$$('li'))[index];
+        const post = (await page.$$('div[data-cardlayout-edgeless] > div'))[index];
         if (!post) throw new Error('Could not find post');
-        post.evaluate(el => el.scrollIntoView());
         return post;
     } catch (error) {
         throw new Error(`Error occurred while getting post handle: ${error}`);
