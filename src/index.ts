@@ -15,6 +15,8 @@ const BTN_CLICK_MAX_RETRIES = 5;
 const FILTER_BTN_LABEL = 'post feed filters toggle';
 const APPLY_FILTER_BTN_LABEL = 'Apply filter';
 const LOAD_REPLIES_LABEL = 'Load replies';
+const SHOW_MORE_LABEL = 'Show more';
+const SHOW_LESS_LABEL = 'Show less';
 
 // Debugging options below
 
@@ -158,8 +160,9 @@ puppeteer.use(StealthPlugin());
                 const postFeedParent = await postFeed.evaluateHandle(
                     (el: HTMLElement) => el.parentElement
                 );
-                if (!(postFeedParent instanceof ElementHandle))
-                    throw new Error('Could not find ul parent');
+                // if (!(postFeedParent instanceof ElementHandle))
+                if (!postFeedParent)
+                    throw new Error('Could not find div parent');
 
                 const loadMoreButton = await (
                     (await (postFeedParent as ElementHandle).evaluateHandle(
@@ -178,7 +181,7 @@ puppeteer.use(StealthPlugin());
                 await page.waitForFunction(
                     (previousLength: number) => {
                         const postFeed = document.querySelector(
-                            'ul[data-cardlayout-edgeless]'
+                            'div[data-cardlayout-edgeless]'
                         );
                         if (!postFeed)
                             throw new Error(
@@ -208,17 +211,7 @@ async function processPost(page: Page, index: number): Promise<void> {
         if (!post) throw new Error('Could not find post');
         await post.evaluate(el => el.scrollIntoView());
 
-        // BUG: Doesn't find commend id/ load more commments properly
-        // NOTE: Ok so this original code finds the comment id, then uses that to trigger the button
-        // Current patreon page has no comment id, so better to use data-tag?
-        // Maybe I don't even need this because loadMoreComments exists
-        // It's actually for "Show more" not loading comments, appearing on text posts with hidden text
-
-        // Solution 1: get the button with text "Show more"
-        // Solution 2 (complex): get all buttons in post, get all divs with an id in post. if a button's aria-controls matches a div's id, get that button
-
-        // TODO: Add SHOW_MORE_LABEL constant
-
+        // Load full post content
         // const cid = await post.evaluate(el => {
         //     console.log(el.querySelector('div[id^="cid-"]'));
         //     return el.querySelector('div[id^="cid-"]')?.id;
@@ -241,11 +234,11 @@ async function processPost(page: Page, index: number): Promise<void> {
         //     );
         // }
 
-        const showMoreBtn = await post.$('button[aria-expanded="false"] ::-p-text(Show more)');
+        const showMoreBtn = await post.$(`button[aria-expanded="false"] ::-p-text(${SHOW_MORE_LABEL})`);
         if (showMoreBtn) {
             await showMoreBtn.click()
             console.log(`Post ${index}: Clicked show more on post.`);
-            await post.waitForSelector('button[aria-expanded="true"] ::-p-text(Show less)');
+            await post.waitForSelector(`button[aria-expanded="true"] ::-p-text(${SHOW_LESS_LABEL})`);
         } else {
             console.log(`Post ${index}: Show more button not found.`);
         }
@@ -320,8 +313,10 @@ async function loadReplies(page: Page, index: number): Promise<void> {
                     const replyThread = await btn.evaluateHandle(
                         el => el.parentElement?.parentElement
                     );
-                    if (!(replyThread instanceof ElementHandle))
+                    // if (!(replyThread instanceof ElementHandle)) {
+                    if (!replyThread) {
                         throw new Error('Could not find reply thread');
+                    }
                     let lastReply = await (
                         replyThread as ElementHandle<HTMLElement>
                     ).evaluate(el => {
@@ -380,7 +375,7 @@ async function loadReplies(page: Page, index: number): Promise<void> {
                 await page.waitForFunction(
                     (index: number) => {
                         const post = document.querySelectorAll(
-                            'ul[data-cardlayout-edgeless] > li'
+                            'div[data-cardlayout-edgeless] > div'
                         )[index];
                         return post.querySelector('svg[aria-label="Loading"]') === null;
                     },
