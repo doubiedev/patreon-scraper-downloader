@@ -131,12 +131,18 @@ puppeteer.use(StealthPlugin());
                     await page.$$('div[data-cardlayout-edgeless] > div')
                 ).slice(postIndexInCurrPage);
                 console.log(`Found ${posts.length} posts.`);
-                console.log(
-                    `Processing post ${postIndexInCurrPage} to ${postIndexInCurrPage + posts.length - 1
-                    }...`
-                );
+                // console.log(
+                //     `Processing post ${postIndexInCurrPage} to ${postIndexInCurrPage + posts.length - 1
+                //     }...`
+                // );
+                console.log(`Processing post ${postIndexInCurrPage} to ${postIndexInCurrPage + STOP_SCRAPE_INDEX}...`);
                 if (PROCESS_POSTS) {
                     for (let i = 0; i < posts.length; i++) {
+                        if (postIndexInCurrPage > STOP_SCRAPE_INDEX) {
+                            hasMorePosts = false;
+                            console.log(`Reached STOP_SCRAPE_INDEX of ${STOP_SCRAPE_INDEX}.`);
+                            break;
+                        }
                         if (
                             WHITELISTED_POSTS.length === 0 ||
                             WHITELISTED_POSTS.includes(postIndexInCurrPage)
@@ -151,11 +157,6 @@ puppeteer.use(StealthPlugin());
                     postIndexInCurrPage += posts.length;
                 }
 
-                if (postIndexInCurrPage > STOP_SCRAPE_INDEX) {
-                    hasMorePosts = false;
-                    console.log(`Reached STOP_SCRAPE_INDEX of ${STOP_SCRAPE_INDEX}.`);
-                    break;
-                }
 
                 const postFeedParent = await postFeed.evaluateHandle(
                     (el: HTMLElement) => el.parentElement
