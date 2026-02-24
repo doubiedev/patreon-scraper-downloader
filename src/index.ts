@@ -33,15 +33,9 @@ const WHITELISTED_POSTS: number[] = [];
 puppeteer.use(StealthPlugin());
 
 (async () => {
-    const { connect } = require('puppeteer-real-browser');
-
-    const { browser, page } = await connect({
+    const browser = await puppeteer.launch({
         headless: false,
-        args: [`--user-data-dir=${path.join(__dirname, '../browser-data')}`],
-        customConfig: {},
-        turnstile: true,
-        connectOption: {},
-        disableXvfb: false,
+        userDataDir: path.join(__dirname, '../browser-data'),
     });
 
     try {
@@ -51,14 +45,22 @@ puppeteer.use(StealthPlugin());
             throw new Error(
                 'Please set a valid numPostsToScrape in the config file.'
             );
-        // const page = await browser.newPage();
+
+        const newPage = await browser.newPage();
+        const pages = await browser.pages();
+        await Promise.all(pages
+            .filter(p => p !== newPage)
+            .map(p => p.close())
+        );
+        const page = newPage;
+        page.setDefaultTimeout(0);
+
         const baseDir = path.join(
             __dirname,
             '../dist',
             CREATOR,
             new Date().toISOString()
         );
-        page.setDefaultTimeout(0);
 
         // await fs.remove(baseDir);
         await fs.ensureDir(baseDir);
